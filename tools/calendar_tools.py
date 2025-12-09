@@ -76,15 +76,15 @@ class CalendarToolset(BaseToolset):
                 desc += "\n\n"
             desc += f"Gmail: {gmail_link}"
 
+        # Default to 'Europe/Stockholm' if no timezone is provided, to avoid "Missing time zone" errors
+        tz = timezone or "Europe/Stockholm"
+        
         event_body: Dict[str, dict | str] = {
             "summary": summary,
             "description": desc,
-            "start": {"dateTime": start_iso},
-            "end": {"dateTime": end_iso},
+            "start": {"dateTime": start_iso, "timeZone": tz},
+            "end": {"dateTime": end_iso, "timeZone": tz},
         }
-        if timezone:
-            event_body["start"]["timeZone"] = timezone
-            event_body["end"]["timeZone"] = timezone
 
         created = (
             service.events()
