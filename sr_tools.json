@@ -1,0 +1,961 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "tools": [
+      {
+        "name": "list_channels",
+        "description": "Lista alla radiokanaler fr\u00e5n Sveriges Radio (P1, P2, P3, P4, lokala kanaler). Inkluderar live stream-l\u00e4nkar och kanalinformation.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "channelId": {
+              "type": "number",
+              "description": "Specifikt kanal-ID (valfritt). Exempel: 132 (P1), 163 (P2), 164 (P3)"
+            },
+            "channelType": {
+              "type": "string",
+              "enum": [
+                "Rikskanal",
+                "Lokal kanal"
+              ],
+              "description": "Filtrera p\u00e5 kanaltyp"
+            },
+            "audioQuality": {
+              "type": "string",
+              "enum": [
+                "low",
+                "normal",
+                "hi"
+              ],
+              "description": "Ljudkvalitet (default: hi)"
+            },
+            "pagination": {
+              "type": "boolean",
+              "description": "Aktivera paginering (default: true)"
+            },
+            "page": {
+              "type": "number",
+              "description": "Sidnummer"
+            },
+            "size": {
+              "type": "number",
+              "description": "Antal resultat per sida (max 100)"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_channel_rightnow",
+        "description": "Visa vad som s\u00e4nds JUST NU p\u00e5 Sveriges Radio. Kan visa en specifik kanal eller alla kanaler samtidigt med f\u00f6reg\u00e5ende, nuvarande och n\u00e4sta program.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "channelId": {
+              "type": "number",
+              "description": "Specifik kanal (om inte angiven = alla kanaler). Exempel: 132 (P1), 164 (P3)"
+            },
+            "sortBy": {
+              "type": "string",
+              "enum": [
+                "channel.name"
+              ],
+              "description": "Sortera efter kanalnamn"
+            }
+          }
+        }
+      },
+      {
+        "name": "search_programs",
+        "description": "S\u00f6k efter radioprogram i Sveriges Radio. S\u00f6ker i programnamn med relevansranking. TIPS: F\u00f6r b\u00e4ttre resultat, anv\u00e4nd programCategoryId eller channelId som filter. Exempel: channelId=164 f\u00f6r P3-program, programCategoryId=82 f\u00f6r dokument\u00e4rer.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Texts\u00f6kning i programnamn (resultaten sorteras efter relevans)"
+            },
+            "programCategoryId": {
+              "type": "number",
+              "description": "Filtrera p\u00e5 kategori-ID (anv\u00e4nd list_program_categories f\u00f6r att se alla)"
+            },
+            "channelId": {
+              "type": "number",
+              "description": "Filtrera p\u00e5 kanal-ID"
+            },
+            "hasOnDemand": {
+              "type": "boolean",
+              "description": "Endast program som finns som podd/on-demand"
+            },
+            "isArchived": {
+              "type": "boolean",
+              "description": "Inkludera arkiverade program"
+            },
+            "sort": {
+              "type": "string",
+              "description": "Sortering, t.ex. \"name\" eller \"name+desc\""
+            },
+            "page": {
+              "type": "number",
+              "description": "Sidnummer"
+            },
+            "size": {
+              "type": "number",
+              "description": "Antal per sida (max 100)"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_program",
+        "description": "H\u00e4mta detaljerad information om ett specifikt radioprogram inklusive beskrivning, kanal, kontaktinfo och poddgrupper.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "programId": {
+              "type": "number",
+              "description": "Program-ID"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "programId"
+          ]
+        }
+      },
+      {
+        "name": "list_program_categories",
+        "description": "Lista alla programkategorier i Sveriges Radio (t.ex. Nyheter, Musik, Sport, Kultur, Samh\u00e4lle) eller h\u00e4mta en specifik kategori.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "categoryId": {
+              "type": "number",
+              "description": "H\u00e4mta specifik kategori med detta ID (valfri)"
+            },
+            "page": {
+              "type": "number",
+              "description": "Sidnummer"
+            },
+            "size": {
+              "type": "number",
+              "description": "Antal per sida"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_program_schedule",
+        "description": "H\u00e4mta tabl\u00e5/schema f\u00f6r ett specifikt program - n\u00e4r det s\u00e4nds och p\u00e5 vilka kanaler.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "programId": {
+              "type": "number",
+              "description": "Program-ID"
+            },
+            "fromDate": {
+              "type": "string",
+              "description": "Fr\u00e5n datum (YYYY-MM-DD)"
+            },
+            "toDate": {
+              "type": "string",
+              "description": "Till datum (YYYY-MM-DD)"
+            },
+            "page": {
+              "type": "number",
+              "description": "Sidnummer"
+            },
+            "size": {
+              "type": "number",
+              "description": "Antal per sida"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "programId"
+          ]
+        }
+      },
+      {
+        "name": "list_broadcasts",
+        "description": "Lista alla tillg\u00e4ngliga s\u00e4ndningar f\u00f6r ett specifikt program. S\u00e4ndningar \u00e4r tillg\u00e4ngliga i 30 dagar efter publicering.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "programId": {
+              "type": "number",
+              "description": "Program-ID"
+            },
+            "page": {
+              "type": "number",
+              "description": "Sidnummer"
+            },
+            "size": {
+              "type": "number",
+              "description": "Antal per sida"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "programId"
+          ]
+        }
+      },
+      {
+        "name": "list_podfiles",
+        "description": "Lista alla tillg\u00e4ngliga poddfiler f\u00f6r ett specifikt program. Returnerar poddfilernas metadata inklusive URL f\u00f6r nedladdning.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "programId": {
+              "type": "number",
+              "description": "Program-ID"
+            },
+            "page": {
+              "type": "number",
+              "description": "Sidnummer"
+            },
+            "size": {
+              "type": "number",
+              "description": "Antal per sida"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "programId"
+          ]
+        }
+      },
+      {
+        "name": "get_podfile",
+        "description": "H\u00e4mta en specifik poddfil med fullst\u00e4ndig information inklusive URL, storlek, l\u00e4ngd och publiceringsdatum.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "podfileId": {
+              "type": "number",
+              "description": "Poddfil-ID"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "podfileId"
+          ]
+        }
+      },
+      {
+        "name": "list_episodes",
+        "description": "Lista alla avsnitt f\u00f6r ett radioprogram. Kan filtrera p\u00e5 datumintervall och v\u00e4lja ljudkvalitet.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "programId": {
+              "type": "number",
+              "description": "Program-ID"
+            },
+            "fromDate": {
+              "type": "string",
+              "description": "Fr\u00e5n datum (YYYY-MM-DD)"
+            },
+            "toDate": {
+              "type": "string",
+              "description": "Till datum (YYYY-MM-DD)"
+            },
+            "audioQuality": {
+              "type": "string",
+              "enum": [
+                "low",
+                "normal",
+                "hi"
+              ],
+              "description": "Ljudkvalitet (default: hi)"
+            },
+            "page": {
+              "type": "number"
+            },
+            "size": {
+              "type": "number"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "programId"
+          ]
+        }
+      },
+      {
+        "name": "search_episodes",
+        "description": "Fulltexts\u00f6k i avsnitt fr\u00e5n Sveriges Radio. S\u00f6k i titlar, beskrivningar och inneh\u00e5ll.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "S\u00f6kterm"
+            },
+            "channelId": {
+              "type": "number",
+              "description": "Filtrera p\u00e5 kanal-ID"
+            },
+            "programId": {
+              "type": "number",
+              "description": "Filtrera p\u00e5 program-ID"
+            },
+            "page": {
+              "type": "number"
+            },
+            "size": {
+              "type": "number"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "query"
+          ]
+        }
+      },
+      {
+        "name": "get_episode",
+        "description": "H\u00e4mta ett specifikt avsnitt med fullst\u00e4ndig information inklusive ljudfiler f\u00f6r streaming och nedladdning.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "episodeId": {
+              "type": "number",
+              "description": "Avsnitt-ID"
+            },
+            "audioQuality": {
+              "type": "string",
+              "enum": [
+                "low",
+                "normal",
+                "hi"
+              ],
+              "description": "Ljudkvalitet"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "episodeId"
+          ]
+        }
+      },
+      {
+        "name": "get_episodes_batch",
+        "description": "H\u00e4mta flera avsnitt samtidigt i ett anrop (effektivt f\u00f6r att h\u00e4mta flera episoder).",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "episodeIds": {
+              "type": "string",
+              "description": "Kommaseparerade avsnitt-ID, t.ex. \"12345,67890,11111\""
+            },
+            "audioQuality": {
+              "type": "string",
+              "enum": [
+                "low",
+                "normal",
+                "hi"
+              ]
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "episodeIds"
+          ]
+        }
+      },
+      {
+        "name": "get_latest_episode",
+        "description": "H\u00e4mta det senaste avsnittet f\u00f6r ett program (anv\u00e4ndbart f\u00f6r att alltid f\u00e5 det nyaste).",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "programId": {
+              "type": "number",
+              "description": "Program-ID"
+            },
+            "audioQuality": {
+              "type": "string",
+              "enum": [
+                "low",
+                "normal",
+                "hi"
+              ]
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "programId"
+          ]
+        }
+      },
+      {
+        "name": "get_channel_schedule",
+        "description": "H\u00e4mta tabl\u00e5 (TV guide-style) f\u00f6r en radiokanal p\u00e5 ett specifikt datum. Visar kronologiskt vad som s\u00e4nds hela dagen.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "channelId": {
+              "type": "number",
+              "description": "Kanal-ID (t.ex. 132 f\u00f6r P1, 164 f\u00f6r P3)"
+            },
+            "date": {
+              "type": "string",
+              "description": "Datum (YYYY-MM-DD). Om inte angivet = dagens datum."
+            },
+            "page": {
+              "type": "number"
+            },
+            "size": {
+              "type": "number"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "channelId"
+          ]
+        }
+      },
+      {
+        "name": "get_program_broadcasts",
+        "description": "H\u00e4mta kommande s\u00e4ndningar f\u00f6r ett specifikt program. Se n\u00e4r programmet s\u00e4nds fram\u00f6ver.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "programId": {
+              "type": "number",
+              "description": "Program-ID"
+            },
+            "fromDate": {
+              "type": "string",
+              "description": "Fr\u00e5n datum (YYYY-MM-DD)"
+            },
+            "toDate": {
+              "type": "string",
+              "description": "Till datum (YYYY-MM-DD)"
+            },
+            "page": {
+              "type": "number"
+            },
+            "size": {
+              "type": "number"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "programId"
+          ]
+        }
+      },
+      {
+        "name": "get_all_rightnow",
+        "description": "\u00d6versikt av vad som s\u00e4nds JUST NU p\u00e5 ALLA Sveriges Radio-kanaler samtidigt (eller en specifik kanal). Perfekt f\u00f6r att se vad som finns att lyssna p\u00e5.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "channelId": {
+              "type": "number",
+              "description": "Kanal-ID (valfri) - om angiven returneras endast den kanalen ist\u00e4llet f\u00f6r alla"
+            },
+            "sortBy": {
+              "type": "string",
+              "enum": [
+                "channel.name"
+              ],
+              "description": "Sortera alfabetiskt efter kanalnamn"
+            },
+            "page": {
+              "type": "number"
+            },
+            "size": {
+              "type": "number"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_playlist_rightnow",
+        "description": "H\u00e4mta l\u00e5t som spelas JUST NU p\u00e5 en kanal. Returnerar f\u00f6reg\u00e5ende l\u00e5t, nuvarande l\u00e5t och n\u00e4stkommande l\u00e5t med fullst\u00e4ndig information (artist, titel, album, skivbolag, komposit\u00f6r, producent, textf\u00f6rfattare, tidsst\u00e4mplar).",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "channelId": {
+              "type": "number",
+              "description": "Kanal-ID (t.ex. 163 f\u00f6r P2 musik, 2576 f\u00f6r Din gata, 132 f\u00f6r P1)"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "channelId"
+          ]
+        }
+      },
+      {
+        "name": "get_channel_playlist",
+        "description": "H\u00e4mta alla l\u00e5tar som spelats i en kanal under ett tidsintervall. Perfekt f\u00f6r att se musikhistorik p\u00e5 en kanal mellan tv\u00e5 datum. Returnerar titel, artist, komposit\u00f6r, album, skivbolag, och tidsst\u00e4mplar f\u00f6r varje l\u00e5t.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "channelId": {
+              "type": "number",
+              "description": "Kanal-ID"
+            },
+            "startDateTime": {
+              "type": "string",
+              "description": "Startdatum och tid (format: YYYY-MM-DD eller YYYY-MM-DDTHH:MM:SS). Default: dagens datum"
+            },
+            "endDateTime": {
+              "type": "string",
+              "description": "Slutdatum och tid (format: YYYY-MM-DD eller YYYY-MM-DDTHH:MM:SS). Default: startDateTime + 1 dag"
+            },
+            "size": {
+              "type": "number",
+              "description": "Sidstorlek (default: 20, max: 100)"
+            },
+            "page": {
+              "type": "number",
+              "description": "Sidnummer f\u00f6r paginering"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "channelId"
+          ]
+        }
+      },
+      {
+        "name": "get_program_playlist",
+        "description": "H\u00e4mta alla l\u00e5tar som spelats i ett program under ett tidsintervall. Anv\u00e4nd detta f\u00f6r att f\u00e5 musikhistorik f\u00f6r ett specifikt program mellan tv\u00e5 datum. Inkluderar alla l\u00e5tdetaljer.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "programId": {
+              "type": "number",
+              "description": "Program-ID"
+            },
+            "startDateTime": {
+              "type": "string",
+              "description": "Startdatum och tid (format: YYYY-MM-DD eller YYYY-MM-DDTHH:MM:SS). Default: dagens datum"
+            },
+            "endDateTime": {
+              "type": "string",
+              "description": "Slutdatum och tid (format: YYYY-MM-DD eller YYYY-MM-DDTHH:MM:SS). Default: startDateTime + 1 dag"
+            },
+            "size": {
+              "type": "number",
+              "description": "Sidstorlek (default: 20, max: 100)"
+            },
+            "page": {
+              "type": "number",
+              "description": "Sidnummer f\u00f6r paginering"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "programId"
+          ]
+        }
+      },
+      {
+        "name": "get_episode_playlist",
+        "description": "H\u00e4mta komplett spellista f\u00f6r ett specifikt programavsnitt (episode). Listar alla l\u00e5tar som spelades i avsnittet med fullst\u00e4ndiga detaljer och tidsst\u00e4mplar.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "episodeId": {
+              "type": "number",
+              "description": "Avsnitt-ID"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          },
+          "required": [
+            "episodeId"
+          ]
+        }
+      },
+      {
+        "name": "list_news_programs",
+        "description": "Lista alla nyhetsprogram fr\u00e5n Sveriges Radio (Ekot, Ekonomiekot, Kulturnytt, P4 Nyheter, etc.).",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "page": {
+              "type": "number",
+              "description": "Sidnummer f\u00f6r paginering"
+            },
+            "size": {
+              "type": "number",
+              "description": "Sidstorlek (antal resultat per sida)"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_latest_news_episodes",
+        "description": "H\u00e4mta senaste nyhetsavsnitt fr\u00e5n alla nyhetsprogram (max 1 dag gamla). Perfekt f\u00f6r en snabb nyhets\u00f6versikt!",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "page": {
+              "type": "number",
+              "description": "Sidnummer f\u00f6r paginering"
+            },
+            "size": {
+              "type": "number",
+              "description": "Sidstorlek (antal resultat per sida)"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_traffic_messages",
+        "description": "H\u00e4mta trafikmeddelanden (olyckor, k\u00f6er, st\u00f6rningar) fr\u00e5n Sveriges Radio. Kan filtrera p\u00e5 omr\u00e5de och datum. Priority: 1=Mycket allvarlig, 5=Mindre st\u00f6rning.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "trafficAreaName": {
+              "type": "string",
+              "description": "Trafikomr\u00e5de, t.ex. \"Stockholm\", \"Uppland\", \"Norrbotten\""
+            },
+            "date": {
+              "type": "string",
+              "description": "Datum f\u00f6r meddelanden (YYYY-MM-DD)"
+            },
+            "page": {
+              "type": "number"
+            },
+            "size": {
+              "type": "number"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_traffic_areas",
+        "description": "H\u00e4mta trafikomr\u00e5den. Kan anv\u00e4ndas med GPS-koordinater f\u00f6r att hitta vilket omr\u00e5de en position tillh\u00f6r, eller utan parametrar f\u00f6r att lista alla omr\u00e5den.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "latitude": {
+              "type": "number",
+              "description": "Latitud (f\u00f6r GPS-s\u00f6kning)"
+            },
+            "longitude": {
+              "type": "number",
+              "description": "Longitud (f\u00f6r GPS-s\u00f6kning)"
+            },
+            "page": {
+              "type": "number",
+              "description": "Sidnummer (endast vid h\u00e4mtning av alla omr\u00e5den)"
+            },
+            "size": {
+              "type": "number",
+              "description": "Sidstorlek (endast vid h\u00e4mtning av alla omr\u00e5den)"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "description": "Svarsformat (default: json)"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_recently_published",
+        "description": "H\u00e4mta senast publicerade s\u00e4ndningar och poddar fr\u00e5n Sveriges Radio. Perfekt f\u00f6r att se vad som \u00e4r nytt!",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "audioQuality": {
+              "type": "string",
+              "enum": [
+                "low",
+                "normal",
+                "hi"
+              ]
+            },
+            "page": {
+              "type": "number"
+            },
+            "size": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_top_stories",
+        "description": "H\u00e4mta toppuffar (featured content) fr\u00e5n Sveriges Radio. Kan h\u00e4mta fr\u00e5n SR:s f\u00f6rstasida eller ett specifikt program.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "programId": {
+              "type": "number",
+              "description": "Program-ID (om inte angiven = SR:s f\u00f6rstasida)"
+            }
+          }
+        }
+      },
+      {
+        "name": "list_extra_broadcasts",
+        "description": "Lista extras\u00e4ndningar (sport, special events) fr\u00e5n Sveriges Radio.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": "string",
+              "description": "Datum (YYYY-MM-DD)"
+            },
+            "sort": {
+              "type": "string",
+              "enum": [
+                "localstarttime",
+                "channel"
+              ],
+              "description": "Sortera efter starttid eller kanal"
+            },
+            "page": {
+              "type": "number"
+            },
+            "size": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_episode_group",
+        "description": "H\u00e4mta en grupp/samling av avsnitt (t.ex. \"K\u00e4nda kriminalfall\", \"Sommarens b\u00e4sta dokument\u00e4rer\").",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "groupId": {
+              "type": "number",
+              "description": "Grupp-ID"
+            },
+            "page": {
+              "type": "number"
+            },
+            "size": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "groupId"
+          ]
+        }
+      },
+      {
+        "name": "search_all",
+        "description": "Global s\u00f6kning \u00f6ver program, avsnitt och kanaler samtidigt. Perfekt f\u00f6r att hitta inneh\u00e5ll n\u00e4r du inte vet exakt var det finns!",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "S\u00f6kterm"
+            },
+            "searchIn": {
+              "type": "string",
+              "enum": [
+                "programs",
+                "episodes",
+                "channels",
+                "all"
+              ],
+              "description": "Var ska det s\u00f6kas (default: all)"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Max antal resultat per kategori (max 50)"
+            }
+          },
+          "required": [
+            "query"
+          ]
+        }
+      },
+      {
+        "name": "list_ondemand_audio_templates",
+        "description": "H\u00e4mta URL-mallar f\u00f6r on-demand-ljud (podcast/avsnitt). Mallarna visar hur ljudl\u00e4nkar \u00e4r uppbyggda med platsh\u00e5llare som [quality] och [audioId].",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "list_live_audio_templates",
+        "description": "H\u00e4mta URL-mallar f\u00f6r live-ljud (direkts\u00e4ndning). Mallarna visar hur ljudl\u00e4nkar \u00e4r uppbyggda med platsh\u00e5llare som [quality] och [channelid].",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    ]
+  }
+}
