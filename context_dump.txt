@@ -1,3 +1,0 @@
-Placeholder: Klistra in din rådata/kontext här.
-Det kan vara allt från "Simhallens öppettider" till "Projektplan för Q1".
-Scriptet kommer att dela upp det i separata mail.

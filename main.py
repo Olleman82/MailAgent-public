@@ -23,7 +23,7 @@ def check_unread_count(profile: str = "default") -> int:
     try:
         service = get_gmail_service(profile=profile)
         results = service.users().messages().list(
-            userId="me", q="label:UNREAD", maxResults=1
+            userId="me", q="label:UNREAD -label:AI-Processed", maxResults=1
         ).execute()
         return len(results.get("messages", []))
     except Exception as e:
@@ -72,9 +72,12 @@ async def run_triage(limit: int, quiet: bool) -> None:
     runner = InMemoryRunner(agent=agent, app_name="mail_calendar_copilot")
 
     prompt = (
-        f"Triagera mina senaste {limit} olästa mail. "
-        "För varje mail: bestäm kategori, sätt label, skapa ev. utkast på svar "
-        "och kalenderhändelse för aktiviteter, och sammanfatta vad du gjorde."
+        f"Triagera mina senaste {limit} olästa mail som INTE har etiketten 'AI-Processed'. "
+        "För varje mail: \n"
+        "1. Bestäm kategori (Svara/Barnens/Övrigt).\n"
+        "2. Sätt etiketten 'AI-Processed' PÅ ALLA som är behandlade (för att undvika loopar).\n"
+        "3. Skapa ev. utkast/kalenderhändelse.\n"
+        "4. Sammanfatta."
     )
 
     print(f"🚀 Startar triage av {limit} mail med Thinking-agent...\n")

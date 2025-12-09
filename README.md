@@ -36,9 +36,47 @@ A powerful, agentic AI assistant for Gmail and Google Calendar. It uses Google's
         GEMINI_MODEL=gemini-2.5-flash
         ```
 
-4.  **Google Authentication:**
-    *   Place your desktop OAuth client secrets file as `credentials.json` in the root folder.
-    *   Run the agent once to authenticate via browser: `python main.py`.
+### 🔑 Google Cloud & Authentication Setup
+
+To allow the agent to access your email and calendar, you need to set up a Google Cloud Project.
+
+#### 1. Cloud Console Setup
+1.  Go to [Google Cloud Console](https://console.cloud.google.com/) and create a new project (e.g., "Mail-Agent").
+2.  **Enable APIs:**
+    *   Go to **APIs & Services** > **Library**.
+    *   Search for and enable **Gmail API** and **Google Calendar API**.
+3.  **Configure Consent Screen:**
+    *   Go to **APIs & Services** > **OAuth consent screen**.
+    *   **User Type:** Select **External** (unless you have a Google Workspace organization).
+    *   Fill in app name and email (other fields can be empty).
+    *   **Scopes:** Add `.../auth/gmail.modify` and `.../auth/calendar`.
+    *   **Test Users:** You don't need to add users if you do the next step immediately.
+    *   **IMPORTANT - Production Mode:**
+        *   Once created, click **"PUBLISH APP"** button under **Publishing Status**.
+        *   Confirm to push to **"In production"**.
+        *   *Why?* If you leave it in "Testing", your login tokens will expire every 7 days. In "Production" (even unverified), they last indefinitely.
+4.  **Create Credentials:**
+    *   Go to **APIs & Services** > **Credentials**.
+    *   Click **Create Credentials** > **OAuth client ID**.
+    *   **Application type:** Select **Desktop app**.
+    *   Download the JSON file, rename it to `credentials.json`, and place it in the root of this project.
+
+#### 2. Local Authentication
+Once `credentials.json` is in place, you need to generate the access tokens.
+
+1.  **Run the setup script:**
+    ```bash
+    python setup_accounts.py
+    ```
+2.  **Follow the browser prompts:**
+    *   The script will open a browser window for each account you have configured.
+    *   **"Google hasn't verified this app":** Since you set the app to "Production" but didn't submit it for tedious verification, you will see this warning. This is normal for personal projects.
+        *   Click **Advanced**.
+        *   Click **Go to [App Name] (unsafe)**.
+        *   Click **Continue** / **Allow**.
+3.  **Success:**
+    *   The script will generate `token.json` (and other token files if multi-account is used).
+    *   These tokens are now valid indefinitely (unless you change your password).
 
 ### Customization
 
