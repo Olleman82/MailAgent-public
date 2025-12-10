@@ -2,8 +2,23 @@
 
 A powerful, agentic AI assistant for Gmail and Google Calendar. It uses Google's Agent Development Kit (ADK) and Gemini Pro to intelligently triage emails, draft replies, and manage calendar events.
 
-**Key Features:**
-*   **Multi-agent Orchestration:** A main email hub agent delegates tasks to specialized sub-agents (Context/Research, Calendar, Radio/Entertainment, Grounded Web Search).
+**Imagine a personal executive assistant who knows your schedule, remembers your past conversations, and even suggests great entertainment—but it's an AI running securely on your machine.**
+
+This isn't just a script; it's a **Multi-Agent System**. A smart "Orchestrator" reads your email and instantly delegates tasks to specialized experts:
+*   🧠 **The Historian (Context Agent):** Digs through years of email history to find that one specific detail you forgot ("What hotel did we stay at in 2018?").
+*   📅 **The Secretary (Calendar Agent):** Manages your schedule, negotiates times, handles conflicts, and books family events seamlessly.
+*   📻 **The Entertainer (Radio Agent):** Knows exactly what's good on the radio right now, finding podcasts and programs that match your mood or upcoming trip.
+*   🌐 **The Researcher (Grounded Search):** Fact-checks vague requests via Google Search so you get precise answers.
+
+**Real-world Use Cases:**
+1.  **"The Time Saver":** Receive an email about a soccer match? The agent checks your family calendar for conflicts, books it, and marks the email as processed—all before you even open your inbox.
+2.  **"The Memory Jog":** An old friend asks for a recipe you sent years ago. The agent searches your history, finds the exact email from 2015, extracts the recipe, and drafts a reply for you.
+3.  **"The Trip Planner":** Going on a road trip? The agent reads your travel dates and proactively suggests 3 perfect podcasts from Sveriges Radio to listen to in the car.
+
+---
+
+**Technical Overview:**
+*   **Multi-agent Orchestration:** A main email hub agent delegates tasks to specialized sub-agents.
 *   **Intelligent Triage:** Categorizes emails (Reply Needed, Calendar/Activities, Other) and labels them automatically.
 *   **Smart Replies:** Drafts replies based on email thread context and extracted attachments.
 *   **Calendar Management:** Checks for conflicts before booking and handles event scheduling.
@@ -34,7 +49,7 @@ A powerful, agentic AI assistant for Gmail and Google Calendar. It uses Google's
     *   Create a `.env` file in the root directory:
         ```bash
         GEMINI_API_KEY=your_api_key_here
-        GEMINI_MODEL=gemini-1.5-pro-latest
+        GEMINI_MODEL=gemini-flash-latest
         ```
 
 ### 🔑 Google Cloud & Authentication Setup
