@@ -22,8 +22,11 @@ def check_unread_count(profile: str = "default") -> int:
     """Check if there are unread messages without fetching content."""
     try:
         service = get_gmail_service(profile=profile)
+        # Use quotes around custom label to prevent hyphen issues
+        # Also limit to last 2 days to avoid processing old inbox backlog.
+        # CHANGED: Using underscore label to avoid search syntax issues.
         results = service.users().messages().list(
-            userId="me", q="label:UNREAD -label:AI-Processed", maxResults=1
+            userId="me", q='label:UNREAD -label:AI_Processed newer_than:2d', maxResults=1
         ).execute()
         return len(results.get("messages", []))
     except Exception as e:
@@ -72,10 +75,10 @@ async def run_triage(limit: int, quiet: bool) -> None:
     runner = InMemoryRunner(agent=agent, app_name="mail_calendar_copilot")
 
     prompt = (
-        f"Triagera mina senaste {limit} olästa mail som INTE har etiketten 'AI-Processed'. "
+        f"Triagera mina senaste {limit} olästa mail som INTE har etiketten 'AI_Processed'. "
         "För varje mail: \n"
         "1. Bestäm kategori (Svara/Barnens/Övrigt).\n"
-        "2. Sätt etiketten 'AI-Processed' PÅ ALLA som är behandlade (för att undvika loopar).\n"
+        "2. Sätt etiketten 'AI_Processed' PÅ ALLA som är behandlade (för att undvika loopar).\n"
         "3. Skapa ev. utkast/kalenderhändelse.\n"
         "4. Sammanfatta."
     )
@@ -118,16 +121,27 @@ def main() -> None:
         print(json.dumps(describe_auth_state(), indent=2))
         sys.exit(0)
 
+    from utils.safety_monitor import SafetyMonitor
+    safety = SafetyMonitor()
+
     if args.watch:
         print(f"🐕 Startar Watchdog-läge. Kollar mail var {args.interval} sekund...")
         try:
             while True:
-                # 1. Check if unread mail exists (cheap check)
+                # 1. Check Safety Circuit Breaker
+                if not safety.check_limits():
+                    print("🛑 Circuit Breaker triggered. Waiting (60s)...")
+                    time.sleep(60)
+                    continue
+
+                # 2. Check if unread mail exists (cheap check)
                 count = check_unread_count("default")
                 if count > 0:
                     print(f"\n📨 Hittade {count}+ olästa mail! Väckte agenten...")
                     try:
                         asyncio.run(run_triage(args.limit, args.quiet))
+                        # RECORD SUCCESS for safety limits
+                        safety.record_run()
                     except Exception as e:
                         print(f"❌ Fel under triage-körning: {e}")
                         import traceback

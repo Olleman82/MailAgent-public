@@ -6,3 +6,6 @@ google-api-python-client==2.187.0
 google-genai==1.53.0
 python-dotenv==1.2.1
 requests==2.31.0
+pypdf==6.4.1
+python-docx
+openpyxl

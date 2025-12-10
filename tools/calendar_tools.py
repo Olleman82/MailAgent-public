@@ -13,6 +13,7 @@ class CalendarToolset(BaseToolset):
     async def get_tools(self, readonly_context=None) -> list[BaseTool]:
         return [
             FunctionTool(self.calendar_create_event),
+            FunctionTool(self.calendar_delete_event),
             FunctionTool(self.calendar_list_events),
         ]
 
@@ -92,3 +93,17 @@ class CalendarToolset(BaseToolset):
             .execute()
         )
         return {"event_id": created.get("id"), "htmlLink": created.get("htmlLink", "")}
+
+    def calendar_delete_event(self, event_id: str, profile: str = "family") -> Dict[str, str]:
+        """
+        Delete a calendar event by ID.
+        BE CAREFUL! This permanently removes the event.
+        Param: event_id - The ID of the event to delete.
+        Param: profile - The profile where the event exists (default: 'family').
+        """
+        try:
+            service = get_calendar_service(profile=profile)
+            service.events().delete(calendarId="primary", eventId=event_id).execute()
+            return {"status": "deleted", "event_id": event_id}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}

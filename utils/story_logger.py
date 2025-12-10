@@ -19,10 +19,12 @@ def print_story_event(event):
         for part in parts:
             # Check for thought parts (experimental feature)
             if hasattr(part, "thought") and part.thought:
-                # Experimental: Check if 'thought' is populated
-                if part.thought:
+                # Hantera endast str; undvik krasch om 'thought' råkar vara bool/annat
+                if isinstance(part.thought, str):
                     print(f"\n🧠 \033[95mTÄNKER:\033[0m")
                     print(f"  \"{part.thought.strip()}\"")
+                else:
+                    continue
             elif hasattr(part, "text") and part.text:
                  # Sometimes thoughts are leaked in text if not parsed correctly, 
                  # but usually text is the final response. We handle text below.

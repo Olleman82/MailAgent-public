@@ -18,26 +18,106 @@ def _headers_map(headers: List[dict]) -> Dict[str, str]:
     return {h["name"]: h.get("value", "") for h in headers or []}
 
 
-def _decode_body(payload: dict) -> Dict[str, str]:
-    """Extract plain/text and html bodies from Gmail payload."""
+import io
+import pypdf
+import docx
+import openpyxl
+
+def _extract_pdf_text(data: bytes, pages: int = 2) -> str:
+    try:
+        reader = pypdf.PdfReader(io.BytesIO(data))
+        text = []
+        for i in range(min(pages, len(reader.pages))):
+            text.append(reader.pages[i].extract_text() or "")
+        return "\n".join(text)
+    except Exception as e:
+        return f"[Error processing PDF: {e}]"
+
+def _extract_docx_text(data: bytes, pages: int = 2) -> str: # Pages is hard to limit in docx, we limit paragraphs?
+    try:
+        doc = docx.Document(io.BytesIO(data))
+        text = []
+        # Rough limit: 50 paragraphs ~ 2 pages
+        limit = 50
+        for para in doc.paragraphs[:limit]:
+            text.append(para.text)
+        return "\n".join(text)
+    except Exception as e:
+        return f"[Error processing DOCX: {e}]"
+
+def _extract_xlsx_text(data: bytes, rows: int = 50) -> str:
+    try:
+        wb = openpyxl.load_workbook(io.BytesIO(data), data_only=True)
+        sheet = wb.active
+        text = []
+        for i, row in enumerate(sheet.iter_rows(values_only=True)):
+            if i >= rows: break
+            # Filter None and join
+            row_text = "\t".join([str(c) if c is not None else "" for c in row])
+            if row_text.strip():
+                text.append(row_text)
+        return "\n".join(text)
+    except Exception as e:
+        return f"[Error processing XLSX: {e}]"
+
+
+def _decode_body(payload: dict, service=None, message_id=None) -> Dict[str, str]:
+    """Extract plain/text, html bodies and ATTACHMENTS from Gmail payload."""
     text_body = ""
     html_body = ""
+    attachments_text = ""
 
     def walk(part: dict):
-        nonlocal text_body, html_body
+        nonlocal text_body, html_body, attachments_text
         mime = part.get("mimeType", "")
-        data = part.get("body", {}).get("data")
-        if data:
+        body = part.get("body", {})
+        data = body.get("data")
+        filename = part.get("filename", "")
+        attachment_id = body.get("attachmentId")
+
+        # 1. Handle regular text parts
+        if data and mime.startswith("text/"):
             decoded = base64.urlsafe_b64decode(data).decode("utf-8", errors="ignore")
             if mime == "text/plain":
                 text_body += decoded
             elif mime == "text/html":
                 html_body += decoded
+        
+        # 2. Handle Attachments (if service and message_id are provided)
+        elif filename and attachment_id and service and message_id:
+            # Check supported extensions
+            lower_name = filename.lower()
+            if lower_name.endswith(('.pdf', '.docx', '.xlsx')):
+                try:
+                    att = service.users().messages().attachments().get(
+                        userId="me", messageId=message_id, id=attachment_id
+                    ).execute()
+                    att_data = base64.urlsafe_b64decode(att["data"])
+                    
+                    extracted = ""
+                    if lower_name.endswith('.pdf'):
+                        extracted = _extract_pdf_text(att_data)
+                    elif lower_name.endswith('.docx'):
+                        extracted = _extract_docx_text(att_data)
+                    elif lower_name.endswith('.xlsx'):
+                        extracted = _extract_xlsx_text(att_data)
+                    
+                    if extracted:
+                        attachments_text += f"\n\n--- BITOGAD FIL: {filename} ---\n{extracted}\n--- SLUT PÅ FIL ---\n"
+                except Exception as e:
+                    print(f"Failed to read attachment {filename}: {e}")
+
         for sub in part.get("parts", []) or []:
             walk(sub)
 
     walk(payload)
-    return {"text": text_body.strip(), "html": html_body.strip()}
+    
+    # Combine attachments into text body so agents see it
+    full_text = text_body.strip()
+    if attachments_text:
+        full_text += "\n" + attachments_text
+
+    return {"text": full_text, "html": html_body.strip()}
 
 
 def _normalize_internal_date(internal_date: Optional[str]) -> Optional[str]:
@@ -100,10 +180,25 @@ class GmailToolset(BaseToolset):
         for profile in valid_profiles:
             try:
                 service = get_gmail_service(profile=profile)
+                
+                # SAFETY FILTER: If we are searching in the default profile (the inbox we work on),
+                # we must NEVER see emails we have already processed, to prevent loops.
+                # We leave 'private' (context) alone so we can recall history.
+                safe_query = query
+                if profile == "default":
+                     extra_terms = []
+                     if "label:AI_Processed" not in query:
+                         extra_terms.append("-label:AI_Processed")
+                     if "newer_than" not in query:
+                         extra_terms.append("newer_than:2d")
+                     
+                     if extra_terms:
+                         safe_query = f"{query} {' '.join(extra_terms)}"
+
                 resp = (
                     service.users()
                     .messages()
-                    .list(userId="me", q=query, maxResults=limit)
+                    .list(userId="me", q=safe_query, maxResults=limit)
                     .execute()
                     or {}
                 )
@@ -146,10 +241,15 @@ class GmailToolset(BaseToolset):
     def gmail_list_unread(self, limit: int = 10, account: str = "default") -> List[Dict[str, Any]]:
         """List unread messages with light metadata."""
         service = get_gmail_service(profile=account)
+        # Avoid att plocka upp redan märkta eller gamla olästa mail (loop-risk).
         resp = (
             service.users()
             .messages()
-            .list(userId="me", q="is:unread", maxResults=limit)
+            .list(
+                userId="me",
+                q="label:UNREAD -label:AI_Processed newer_than:2d",
+                maxResults=limit,
+            )
             .execute()
             or {}
         )
@@ -193,7 +293,8 @@ class GmailToolset(BaseToolset):
                 .execute()
             )
             headers = _headers_map(msg.get("payload", {}).get("headers", []))
-            bodies = _decode_body(msg.get("payload", {}))
+            # Pass service and ID to enable attachment downloading
+            bodies = _decode_body(msg.get("payload", {}), service=service, message_id=msg.get("id"))
             thread_msgs: List[Dict[str, Any]] = []
             thread_id = msg.get("threadId")
             thread_resp = (
@@ -204,7 +305,8 @@ class GmailToolset(BaseToolset):
             )
             for m in thread_resp.get("messages", []):
                 th_headers = _headers_map(m.get("payload", {}).get("headers", []))
-                th_bodies = _decode_body(m.get("payload", {}))
+                # Pass service and ID here too
+                th_bodies = _decode_body(m.get("payload", {}), service=service, message_id=m.get("id"))
                 thread_msgs.append(
                     {
                         "message_id": m.get("id"),
@@ -276,13 +378,18 @@ class GmailToolset(BaseToolset):
         """Create or reuse a label and apply it to a message."""
         service = get_gmail_service(profile=account)
         label_id = self._ensure_label(service, label_name)
-        modified = (
-            service.users()
-            .messages()
-            .modify(userId="me", id=message_id, body={"addLabelIds": [label_id]})
-            .execute()
-        )
-        return {"message_id": message_id, "label": label_name, "result": modified}
+        try:
+            modified = (
+                service.users()
+                .messages()
+                .modify(userId="me", id=message_id, body={"addLabelIds": [label_id]})
+                .execute()
+            )
+            return {"message_id": message_id, "label": label_name, "result": modified}
+        except Exception as e:
+            # If message not found (404) or other error, just report it without crashing
+            print(f"⚠️ Failed to label message {message_id}: {e}")
+            return {"message_id": message_id, "label": label_name, "error": str(e)}
 
     def gmail_create_draft_reply(self, message_id: str, reply_body: str, account: str = "default") -> Dict[str, Any]:
         """Create a Gmail draft reply for a given message."""

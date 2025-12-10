@@ -51,3 +51,8 @@ DEFAULT_UNREAD_LIMIT = int(os.getenv("UNREAD_LIMIT", "10"))
 
 # User-friendly app name for OAuth consent screen.
 APP_NAME = os.getenv("APP_NAME", "Mail & Calendar Copilot (Lab)")
+
+# 🛡️ Safety Circuit Breaker Configuration
+SAFETY_MAX_RUNS_PER_DAY = int(os.getenv("SAFETY_MAX_RUNS_PER_DAY", "50"))
+SAFETY_MAX_RUNS_PER_HOUR = int(os.getenv("SAFETY_MAX_RUNS_PER_HOUR", "10"))
+

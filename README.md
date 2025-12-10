@@ -3,11 +3,12 @@
 A powerful, agentic AI assistant for Gmail and Google Calendar. It uses Google's Agent Development Kit (ADK) and Gemini Pro to intelligently triage emails, draft replies, and manage calendar events.
 
 **Key Features:**
-*   **Intelligent Triage:** Categorizes emails (Reply, To-Do, Info) and applies Gmail labels.
-*   **Smart Replies:** Drafts context-aware replies based on email history and thread context.
-*   **Calendar Management:** Automatically detects event invites and checks your calendar for conflicts before suggesting bookings.
-*   **Thinking Agent:** Uses "thinking" capabilities to reason about complex requests before acting.
-*   **External Tool Support:** (Optional) Support for Model Context Protocol (MCP) tools, e.g., Sveriges Radio search.
+*   **Multi-agent Orchestration:** A main email hub agent delegates tasks to specialized sub-agents (Context/Research, Calendar, Radio/Entertainment, Grounded Web Search).
+*   **Intelligent Triage:** Categorizes emails (Reply Needed, Calendar/Activities, Other) and labels them automatically.
+*   **Smart Replies:** Drafts replies based on email thread context and extracted attachments.
+*   **Calendar Management:** Checks for conflicts before booking and handles event scheduling.
+*   **Attachment Handling:** Reads and extracts text from PDF, Word, and Excel attachments locally to provide full context to agents.
+*   **External Real-time Info:** Uses Grounded Google Search for up-to-date info and Sveriges Radio (SR) MCP for Swedish radio recommendations.
 
 ## 🚀 Getting Started
 
@@ -30,76 +31,53 @@ A powerful, agentic AI assistant for Gmail and Google Calendar. It uses Google's
     ```
 
 3.  **Setup Configuration:**
-    *   Create a `.env` file based on `.env.example` (if provided) or manually:
+    *   Create a `.env` file in the root directory:
         ```bash
         GEMINI_API_KEY=your_api_key_here
-        GEMINI_MODEL=gemini-2.5-flash
+        GEMINI_MODEL=gemini-1.5-pro-latest
         ```
 
 ### 🔑 Google Cloud & Authentication Setup
 
-To allow the agent to access your email and calendar, you need to set up a Google Cloud Project.
+To allow the agent to access your email and calendar, you need a Google Cloud Project with the correct credentials.
 
 #### 1. Cloud Console Setup
-1.  Go to [Google Cloud Console](https://console.cloud.google.com/) and create a new project (e.g., "Mail-Agent").
+1.  Go to [Google Cloud Console](https://console.cloud.google.com/) and create a new project.
 2.  **Enable APIs:**
     *   Go to **APIs & Services** > **Library**.
     *   Search for and enable **Gmail API** and **Google Calendar API**.
 3.  **Configure Consent Screen:**
     *   Go to **APIs & Services** > **OAuth consent screen**.
-    *   **User Type:** Select **External** (unless you have a Google Workspace organization).
-    *   Fill in app name and email (other fields can be empty).
+    *   **User Type:** Select **External**.
     *   **Scopes:** Add `.../auth/gmail.modify` and `.../auth/calendar`.
-    *   **Test Users:** You don't need to add users if you do the next step immediately.
-    *   **IMPORTANT - Production Mode:**
-        *   Once created, click **"PUBLISH APP"** button under **Publishing Status**.
-        *   Confirm to push to **"In production"**.
-        *   *Why?* If you leave it in "Testing", your login tokens will expire every 7 days. In "Production" (even unverified), they last indefinitely.
+    *   **Publish App:** Push the app to "In production" (even if unverified) to avoid 7-day token expiration.
 4.  **Create Credentials:**
     *   Go to **APIs & Services** > **Credentials**.
     *   Click **Create Credentials** > **OAuth client ID**.
-    *   **Application type:** Select **Desktop app**.
-    *   Download the JSON file, rename it to `credentials.json`, and place it in the root of this project.
+    *   **Application type:** Desktop app.
+    *   Download the JSON file, rename it to `credentials.json`, and place it in the project root.
 
 #### 2. Local Authentication
-Once `credentials.json` is in place, you need to generate the access tokens.
-
 1.  **Run the setup script:**
     ```bash
     python setup_accounts.py
     ```
-2.  **Follow the browser prompts:**
-    *   The script will open a browser window for each account you have configured.
-    *   **"Google hasn't verified this app":** Since you set the app to "Production" but didn't submit it for tedious verification, you will see this warning. This is normal for personal projects.
-        *   Click **Advanced**.
-        *   Click **Go to [App Name] (unsafe)**.
-        *   Click **Continue** / **Allow**.
-3.  **Success:**
-    *   The script will generate `token.json` (and other token files if multi-account is used).
-    *   These tokens are now valid indefinitely (unless you change your password).
+2.  **Follow the browser prompts** to log in with your primary Google account.
+3.  This will generate `token.json`.
+
+## 🤖 Agent Architecture
+
+- **Orchestrator (Hub Agent):** The main manager that reads emails, classifies them, and delegates tasks.
+- **Context/Research Agent:** Searches your email history for long-term memory and context.
+- **Calendar Agent:** Manages your schedule, checks conflicts, and books events.
+- **Radio Agent:** Specialized in Swedish Radio (SR) content (can be replaced/disabled if not needed).
+- **Grounded Search Agent:** Performs Google Searches for external queries.
 
 ### Customization
 
-#### 1. Agent Instructions (Prompt)
-The agent comes with a generic default prompt in `agent_instruction.default.txt`.
-To customize the agent's persona and rules for **YOUR** needs:
-1.  Copy `agent_instruction.default.txt` to `agent_instruction.txt`.
-2.  Edit `agent_instruction.txt` with your specific instructions (e.g., "You are helpful...", "Always sign as Bob", etc.).
-    *   *Note: `agent_instruction.txt` is gitignored so your personal prompt stays private.*
-
-#### 2. Multiple Accounts (Optional)
-If you want the agent to access multiple Gmail/Calendar accounts (e.g., Personal, Work, Family):
-1.  Create a file named `profiles.json` in the root directory.
-2.  Define your profile mappings:
-    ```json
-    {
-        "default": "token.json",
-        "work": "token_work.json",
-        "family": "token_family.json"
-    }
-    ```
-3.  The agent can now be instructed to search in specific profiles (e.g., `profiles=['work']`).
-    *   *Note: `profiles.json` is gitignored.*
+The agent behavior is defined by instruction files.
+- **Default behavior:** Defined in `*.default.txt` files (generic, single mailbox).
+- **Custom behavior:** Create your own `*.txt` files (e.g., `agent_instruction.txt`) to override the defaults. These files are ignored by git, preventing accidental leaks of personal instructions.
 
 ## 🏃 Usage
 
@@ -109,7 +87,7 @@ python main.py --limit 10
 ```
 
 **Run in Watchdog Mode (Continuous):**
-Checks for new emails every minute and wakes up only when needed.
+Checks for new emails periodically.
 ```bash
 python main.py --watch --interval 60
 ```
